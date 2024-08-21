@@ -26,6 +26,8 @@ for file_path in tqdm(file_paths, desc="Processing images"):
     image = Image.open(file_path).convert('RGB')
     
     image_lab = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2LAB)
+
+    l_channel, a_channel, b_channel = cv2.split(image_lab)
     
     a_tensor = torch.tensor(a_channel, dtype=torch.float32)
     b_tensor = torch.tensor(b_channel, dtype=torch.float32)
