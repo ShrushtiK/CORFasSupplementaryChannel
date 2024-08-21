@@ -130,7 +130,7 @@ class ResNet(nn.Module):
         input_channels: int = 3  # Parameter to set input channels for the model 
     ) -> None:
         super().__init__()
-        _log_api_usage_once(self)
+        #_log_api_usage_once(self)
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
         self._norm_layer = norm_layer
