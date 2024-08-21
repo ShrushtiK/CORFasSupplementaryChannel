@@ -44,43 +44,41 @@ class CustomDataset:
             contour_image = self.transform_contour(contour_image)
 
         # Apply transformations to RGB image (resize and center crop)
-        if self.transform_rgb:
-            rgb_image = self.transform_rgb(rgb_image)
+        #if self.transform_rgb:
+        #    rgb_image = self.transform_rgb(rgb_image)
 
         rgb_np = np.array(rgb_image)
         lab_image = cv2.cvtColor(rgb_np, cv2.COLOR_RGB2Lab)
-        print(f"Dimensions after RGB to LAB conversion: {lab_image.shape}")  # Should still be (H, W, 3)
+        #print(f"Dimensions after RGB to LAB conversion: {lab_image.shape}")  # Should still be (H, W, 3)
 
         # Split the LAB image into L, A, and B channels
         l_channel, a_channel, b_channel = cv2.split(lab_image)
-        print(f"Dimensions of A channel: {a_channel.shape}")  # Should be (H, W)
-        print(f"Dimensions of B channel: {b_channel.shape}")  # Should be (H, W)
+        #print(f"Dimensions of A channel: {a_channel.shape}")  # Should be (H, W)
+        #print(f"Dimensions of B channel: {b_channel.shape}")  # Should be (H, W)
 
         a_channel_tensor = torch.tensor(a_channel, dtype=torch.float32).unsqueeze(0)
         b_channel_tensor = torch.tensor(b_channel, dtype=torch.float32).unsqueeze(0)
-        print(f"Dimensions of A channel tensor: {a_channel_tensor.shape}")  # Should be (1, H, W)
-        print(f"Dimensions of B channel tensor: {b_channel_tensor.shape}")  # Should be (1, H, W)
+        #print(f"Dimensions of A channel tensor: {a_channel_tensor.shape}")  # Should be (1, H, W)
+        #print(f"Dimensions of B channel tensor: {b_channel_tensor.shape}")  # Should be (1, H, W)
 
         # Normalize a and b channels
         a_channel_tensor = a_channel_tensor / 255.0
         b_channel_tensor = b_channel_tensor / 255.0
 
         image = torch.cat((contour_image, a_channel_tensor, b_channel_tensor), dim=0)
-        print(f"Final 3-channel input dimensions: {image.shape}")
+        #print(f"Final 3-channel input dimensions: {image.shape}")
         return image, rgb_path
 
 
 # Define the transformations
-transform_rgb = transforms.Compose([
-    transforms.Resize(256),
-    transforms.CenterCrop(224)
+#transform_rgb = transforms.Compose([
+#    transforms.Resize(256),
+#    transforms.CenterCrop(224)
     # No ToTensor() or normalization here
-])
+#])
 
 transform_contour = transforms.Compose([
-    transforms.Resize(256),
-    transforms.CenterCrop(224),
-    transforms.ToTensor()
+    transforms.PILToTensor()
 ])
 
 # Get arguments from command line
@@ -91,7 +89,7 @@ contour_dir = '/tmp/contour'
 save_dir = '/tmp/tensor'
 
 # Instantiate the dataset
-dataset = CustomDataset(rgb_dir, contour_dir, transform_rgb, transform_contour, class_range=(start_class, end_class))
+dataset = CustomDataset(rgb_dir, contour_dir, None, transform_contour, class_range=(start_class, end_class))
 
 # Save the tensors to disk
 for idx in tqdm(range(len(dataset))):
@@ -101,5 +99,5 @@ for idx in tqdm(range(len(dataset))):
     tensor_save_dir = os.path.dirname(tensor_save_path)
     os.makedirs(tensor_save_dir, exist_ok=True)
     tensor_save_path = tensor_save_path.replace('.jpg', '.pt').replace('.jpeg', '.pt').replace('.JPG', '.pt').replace('.JPEG', '.pt')
-    print(f"Saving tensor {tensor_save_path} with dimensions: {tensor.shape}")
+    #print(f"Saving tensor {tensor_save_path} with dimensions: {tensor.shape}")
     torch.save(tensor, tensor_save_path)

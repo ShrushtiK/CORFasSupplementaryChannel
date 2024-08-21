@@ -41,29 +41,23 @@ class CustomDataset:
             rgb_image = self.transform_rgb(rgb_image)
         if self.transform_contour:
             contour_image = self.transform_contour(contour_image)
-        print(f"RGB image dimensions: {rgb_image.shape, rgb_image.dim()}")
-        print(f"Contour image dimensions: {contour_image.shape, contour_image.dim()}")
+        #print(f"RGB image dimensions: {rgb_image.shape, rgb_image.dim()}")
+        #print(f"Contour image dimensions: {contour_image.shape, contour_image.dim()}")
 
         #contour_image = contour_image.unsqueeze(0)  # Add channel dimension
         #print(f"New contour image dimensions: {contour_image.shape, contour_image.dim()}")
 
         image = torch.cat((rgb_image, contour_image), dim=0)  # Concatenate along channel dimension
-        print(f"4-channel input dimensions: {image.shape, image.dim()}")
+        #print(f"4-channel input dimensions: {image.shape, image.dim()}")
         return image, rgb_path
 
 # Define the transformations
 transform_rgb = transforms.Compose([
-    transforms.Resize(256),
-    transforms.CenterCrop(224),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    transforms.PILToTensor(),
 ])
 
 transform_contour = transforms.Compose([
-    transforms.Resize(256),
-    transforms.CenterCrop(224),
-    transforms.ToTensor()
-    #transforms.Normalize(mean=[0.5], std=[0.5])  # Assuming grayscale mean=0.5, std=0.5
+    transforms.PILToTensor()
 ])
 
 # Get arguments from command line
@@ -84,7 +78,7 @@ for idx in tqdm(range(len(dataset))):
     tensor_save_dir = os.path.dirname(tensor_save_path)
     os.makedirs(tensor_save_dir, exist_ok=True)
     tensor_save_path = tensor_save_path.replace('.jpg', '.pt').replace('.jpeg', '.pt').replace('.JPG', '.pt').replace('.JPEG', '.pt')
-    print(f"Saving tensor {tensor_save_path} with dimensions: {tensor.shape}")
+    #print(f"Saving tensor {tensor_save_path} with dimensions: {tensor.shape}")
     torch.save(tensor, tensor_save_path)
 
-print(f"Saved tensors for classes {start_class} to {end_class} to {save_dir}")
+#print(f"Saved tensors for classes {start_class} to {end_class} to {save_dir}")
