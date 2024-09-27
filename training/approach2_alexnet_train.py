@@ -9,7 +9,7 @@ import torch.nn.functional as F
 import torchvision.transforms as transforms
 from torchvision.transforms import InterpolationMode
 
-from models.alexnet import AlexNet3Channel
+from models.alexnet import AlexNet4Channel
 
 # Define dataset
 class CustomDataset(torch.utils.data.Dataset):
@@ -39,23 +39,6 @@ class CustomDataset(torch.utils.data.Dataset):
         return image, label
 
 
-class ApplyTransformToFirstChannel:
-    def __init__(self, transform):
-        self.transform = transform
-
-    def __call__(self, tensor):
-        # Split the tensor into three channels
-        first_channel = tensor[0, :, :]
-        other_channels = tensor[1:, :, :]
-
-        # Apply the provided transform only to the first channel
-        first_channel = self.transform(first_channel.unsqueeze(0))
-
-        # Concatenate the transformed first channel back with the other channels
-        transformed_tensor = torch.cat((first_channel, other_channels), dim=0)
-
-        return transformed_tensor
-
 def initialize_model_and_datasets(tensor_dir):
     # Create class_to_idx mapping from subfolder names
     classes = sorted(os.listdir(os.path.join(tensor_dir, 'train')))
@@ -64,17 +47,15 @@ def initialize_model_and_datasets(tensor_dir):
     train_transform = transforms.Compose([
         transforms.RandomResizedCrop(224, interpolation=InterpolationMode.BILINEAR, antialias=True),
         transforms.RandomHorizontalFlip(0.5),
-        #transforms.ConvertImageDtype(torch.float),
-        ApplyTransformToFirstChannel(transforms.ConvertImageDtype(torch.float)),
-        transforms.Normalize(mean=[0.034, 0.507, 0.533], std=[0.087, 0.049, 0.070])
+        transforms.ConvertImageDtype(torch.float),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406, 0.034], std=[0.229, 0.224, 0.225, 0.087])
     ])
 
     val_transform = transforms.Compose([
         transforms.Resize(256, interpolation=InterpolationMode.BILINEAR, antialias=True),
         transforms.CenterCrop(224),
-        #transforms.ConvertImageDtype(torch.float),
-        ApplyTransformToFirstChannel(transforms.ConvertImageDtype(torch.float)),
-        transforms.Normalize(mean=[0.034, 0.507, 0.533], std=[0.087, 0.049, 0.070]),
+        transforms.ConvertImageDtype(torch.float),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406, 0.034], std=[0.229, 0.224, 0.225, 0.087]),
     ])
 
     # Create datasets
@@ -86,7 +67,7 @@ def initialize_model_and_datasets(tensor_dir):
     val_loader = DataLoader(val_dataset, batch_size=128, shuffle=False, num_workers=3, pin_memory=True)
 
     # Initialize the model
-    model = AlexNet3Channel(num_classes=len(classes))
+    model = AlexNet4Channel(num_classes=len(classes))
 
     # Use DataParallel to leverage multiple GPUs
     if torch.cuda.device_count() > 1:
@@ -165,12 +146,13 @@ for epoch in range(0, num_epochs):
     # Step the scheduler
     #scheduler.step(val_error)
     scheduler.step()
+
     if epoch >= 89:
-        checkpoint_path = "/scratch/s5288843/approach1_alexnet_2"
+        checkpoint_path = "/scratch/s5288843/approach2_alexnet_2"
         save_checkpoint(epoch, model, optimizer, scheduler, checkpoint_path)
         print(f"Checkpoint saved at epoch {epoch+1}")
     elif (epoch + 1) % 2 == 0 and epoch != 0:
-        checkpoint_path = "/scratch/s5288843/approach1_alexnet_2"
+        checkpoint_path = "/scratch/s5288843/approach2_alexnet_2"
         save_checkpoint(epoch, model, optimizer, scheduler, checkpoint_path)
         print(f"Checkpoint saved at epoch {epoch+1}")
 

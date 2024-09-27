@@ -44,15 +44,15 @@ def initialize_model_and_datasets(tensor_dir):
     classes = sorted(os.listdir(os.path.join(tensor_dir, 'train')))
     class_to_idx = {class_name: idx for idx, class_name in enumerate(classes)}
 
-    train_transform = ([
-        transforms.RandomResizedCrop(224, interpolation=InterpolationMode.BILINEAR),
+    train_transform = transforms.Compose([
+        transforms.RandomResizedCrop(224, interpolation=InterpolationMode.BILINEAR, antialias=True),
         transforms.RandomHorizontalFlip(0.5),
         transforms.ConvertImageDtype(torch.float),
         transforms.Normalize(mean=[0.485, 0.456, 0.406, 0.034], std=[0.229, 0.224, 0.225, 0.087])
     ])
 
     val_transform = transforms.Compose([
-        transforms.Resize(256, interpolation=InterpolationMode.BILINEAR),
+        transforms.Resize(256, interpolation=InterpolationMode.BILINEAR, antialias=True),
         transforms.CenterCrop(224),
         transforms.ConvertImageDtype(torch.float),
         transforms.Normalize(mean=[0.485, 0.456, 0.406, 0.034], std=[0.229, 0.224, 0.225, 0.087]),
@@ -61,7 +61,7 @@ def initialize_model_and_datasets(tensor_dir):
     # Create datasets
     train_dataset = CustomDataset(tensor_dir=os.path.join(tensor_dir, 'train'), class_to_idx=class_to_idx, transform=train_transform)
     val_dataset = CustomDataset(tensor_dir=os.path.join(tensor_dir, 'val'), class_to_idx=class_to_idx, transform=val_transform)
-    
+
         # Create data loaders
     train_loader = DataLoader(train_dataset, batch_size=256, shuffle=True, num_workers=6, pin_memory=True)
     val_loader = DataLoader(val_dataset, batch_size=256, shuffle=False, num_workers=3, pin_memory=True)
@@ -97,7 +97,7 @@ optimizer = optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=1e-
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
 
 # Training setup
-num_epochs = 90
+num_epochs = 100
 
 # Training loop
 for epoch in range(0, num_epochs):
@@ -146,8 +146,12 @@ for epoch in range(0, num_epochs):
     # Step the scheduler
     scheduler.step()
 
-    if (epoch + 1) % 5 == 0 and epoch != 0:
-        checkpoint_path = "/scratch/s5288843/approach2_resnet50"
+    if epoch >= 89:
+        checkpoint_path = "/scratch/s5288843/approach2_resnet_2"
+        save_checkpoint(epoch, model, optimizer, scheduler, checkpoint_path)
+        print(f"Checkpoint saved at epoch {epoch+1}")
+    elif (epoch + 1) % 5 == 0 and epoch != 0:
+        checkpoint_path = "/scratch/s5288843/approach2_resnet_2"
         save_checkpoint(epoch, model, optimizer, scheduler, checkpoint_path)
         print(f"Checkpoint saved at epoch {epoch+1}")
 

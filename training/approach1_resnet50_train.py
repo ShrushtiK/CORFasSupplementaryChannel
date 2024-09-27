@@ -9,7 +9,7 @@ import torch.nn.functional as F
 import torchvision.transforms as transforms
 from torchvision.transforms import InterpolationMode
 
-from models.alexnet import AlexNet3Channel
+from models.resnet50 import ResNet503Channel
 
 # Define dataset
 class CustomDataset(torch.utils.data.Dataset):
@@ -37,7 +37,6 @@ class CustomDataset(torch.utils.data.Dataset):
         if self.transform:
             image = self.transform(image)
         return image, label
-
 
 class ApplyTransformToFirstChannel:
     def __init__(self, transform):
@@ -82,11 +81,11 @@ def initialize_model_and_datasets(tensor_dir):
     val_dataset = CustomDataset(tensor_dir=os.path.join(tensor_dir, 'val'), class_to_idx=class_to_idx, transform=val_transform)
 
         # Create data loaders
-    train_loader = DataLoader(train_dataset, batch_size=128, shuffle=True, num_workers=6, pin_memory=True)
-    val_loader = DataLoader(val_dataset, batch_size=128, shuffle=False, num_workers=3, pin_memory=True)
+    train_loader = DataLoader(train_dataset, batch_size=256, shuffle=True, num_workers=6, pin_memory=True)
+    val_loader = DataLoader(val_dataset, batch_size=256, shuffle=False, num_workers=3, pin_memory=True)
 
     # Initialize the model
-    model = AlexNet3Channel(num_classes=len(classes))
+    model = ResNet503Channel(num_classes=len(classes))
 
     # Use DataParallel to leverage multiple GPUs
     if torch.cuda.device_count() > 1:
@@ -111,7 +110,7 @@ tensor_dir = '/tmp/tensor'
 model, train_loader, val_loader = initialize_model_and_datasets(tensor_dir)
 
 criterion = nn.CrossEntropyLoss().to(torch.device("cuda"))
-optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9, weight_decay=5e-4)
+optimizer = optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=1e-4)
 #scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5, verbose=True)
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
 
@@ -163,14 +162,14 @@ for epoch in range(0, num_epochs):
     print(f"Epoch {epoch+1} Validation Loss: {epoch_val_loss:.4f} | Validation Top-1 Error: {val_error}%")
 
     # Step the scheduler
-    #scheduler.step(val_error)
     scheduler.step()
+
     if epoch >= 89:
-        checkpoint_path = "/scratch/s5288843/approach1_alexnet_2"
+        checkpoint_path = "/scratch/s5288843/approach1_resnet_2"
         save_checkpoint(epoch, model, optimizer, scheduler, checkpoint_path)
         print(f"Checkpoint saved at epoch {epoch+1}")
     elif (epoch + 1) % 2 == 0 and epoch != 0:
-        checkpoint_path = "/scratch/s5288843/approach1_alexnet_2"
+        checkpoint_path = "/scratch/s5288843/approach1_resnet_2"
         save_checkpoint(epoch, model, optimizer, scheduler, checkpoint_path)
         print(f"Checkpoint saved at epoch {epoch+1}")
 
